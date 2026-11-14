@@ -8,6 +8,11 @@
   <meta name="theme-color" content="#0b0c10">
   <title>ToneForge LUT - Lightroom to .CUBE Color Engine</title>
 
+  <!-- Apple San Francisco Web Fonts (SF Pro Display & SF Mono) for Cross-Platform Fidelity -->
+  <link rel="preconnect" href="https://fonts.cdnfonts.com" crossorigin>
+  <link href="https://fonts.cdnfonts.com/css/sf-pro-display" rel="stylesheet">
+  <link href="https://fonts.cdnfonts.com/css/sf-mono" rel="stylesheet">
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- UTIF.js for Native 16-Bit & 8-Bit Uncompressed/LZW TIFF Decoding in Browser -->
@@ -26,7 +31,7 @@
             iosGreen: '#10b981'
           },
           fontFamily: {
-            sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'Segoe UI', 'Roboto', 'sans-serif'],
+            sans: ['"SF Pro Display"', '"SF Pro Text"', '-apple-system', 'BlinkMacSystemFont', '"SF Pro"', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
             mono: ['"SF Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
           }
         }
@@ -82,14 +87,28 @@
       --ambient-glow-2: rgba(219, 39, 119, 0.05);
     }
 
+    body, input, textarea, select, button {
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
     body {
       background-color: var(--bg-main);
       color: var(--text-main);
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       -webkit-user-select: none;
-      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11", "kern" 1;
+      letter-spacing: -0.012em;
       transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.35s ease;
+    }
+
+    .font-mono, #metricShadow, #metricContrast, #metricHighlight, #gridNodesBadge, #bitDepthBadge, #fileInfoTag {
+      font-feature-settings: "tnum" 1, "cv02", "cv03";
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.015em;
     }
 
     /* Subtle Ambient Cinema Backdrop */
@@ -216,9 +235,9 @@
       -webkit-appearance: none;
       -moz-appearance: none;
       appearance: none;
-      padding-right: 1.75rem;
+      padding-right: 2.25rem !important;
       background-repeat: no-repeat;
-      background-position: right 0.5rem center;
+      background-position: right 0.75rem center;
       background-size: 0.75rem 0.75rem;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f3f4f6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 15l5 5 5-5M7 9l5-5 5 5'/%3E%3C/svg%3E");
     }
@@ -265,41 +284,41 @@
   <div class="ambient-backdrop"></div>
 
   <!-- HEADER NAVIGATION BAR (MIRRORS GELSTACK PRO) -->
-  <header class="sticky top-0 z-40 glass-nav border-b border-black/10 dark:border-white/10 px-3 sm:px-4 py-2.5">
-    <div class="max-w-4xl mx-auto flex items-center justify-between gap-1.5 sm:gap-3 w-full">
+  <header class="sticky top-0 z-40 glass-nav border-b border-black/10 dark:border-white/10 px-3 sm:px-5 lg:px-8 py-2.5 lg:py-3.5">
+    <div class="max-w-4xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-[1400px] mx-auto flex items-center justify-between gap-1.5 sm:gap-3 lg:gap-4 w-full">
       
       <!-- Brand Identity -->
-      <div class="flex items-center space-x-2 shrink-0">
-        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-violet-600 to-pink-600 flex items-center justify-center shadow-md shadow-violet-950/30 border border-white/20 shrink-0">
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="flex items-center space-x-2 lg:space-x-2.5 shrink-0">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-violet-600 to-pink-600 flex items-center justify-center shadow-md shadow-violet-950/30 border border-white/20 shrink-0">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5 lg:w-5 lg:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
           </svg>
         </div>
         <div class="leading-tight">
           <div class="flex items-center space-x-1.5">
-            <h1 class="text-xs sm:text-base font-bold tracking-tight whitespace-nowrap" style="color: var(--text-main)">ToneForge LUT</h1>
-            <span class="hidden sm:inline-block text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-500 dark:text-blue-400 border border-blue-500/30 tracking-wider">16-BIT .CUBE</span>
+            <h1 class="text-xs sm:text-base lg:text-lg font-bold tracking-tight whitespace-nowrap" style="color: var(--text-main)">ToneForge LUT</h1>
+            <span class="hidden sm:inline-block text-[9px] lg:text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-500 dark:text-blue-400 border border-blue-500/30 tracking-wider">16-BIT .CUBE</span>
           </div>
-          <p class="hidden sm:block text-[10px] opacity-75 whitespace-nowrap" style="color: var(--text-sub)">Lightroom to Rec.709 Video Color Engine</p>
+          <p class="hidden sm:block text-[10px] lg:text-xs opacity-75 whitespace-nowrap" style="color: var(--text-sub)">Lightroom to Rec.709 Video Color Engine</p>
         </div>
       </div>
 
       <!-- Right Controls: Theme Switcher, Save PWA, Reset -->
-      <div class="flex items-center space-x-1.5 shrink-0">
-        <select id="themeSelector" onchange="setTheme(this.value)" aria-label="Theme Mode" class="theme-select pl-2.5 pr-7 py-1 rounded-lg text-[11px] font-semibold focus:outline-none cursor-pointer whitespace-nowrap">
+      <div class="flex items-center space-x-1.5 lg:space-x-2 shrink-0">
+        <select id="themeSelector" onchange="setTheme(this.value)" aria-label="Theme Mode" class="theme-select pl-2.5 pr-8 py-1 lg:py-1.5 lg:pl-3.5 lg:pr-10 rounded-lg lg:rounded-xl text-[11px] lg:text-xs font-semibold focus:outline-none cursor-pointer whitespace-nowrap">
           <option value="system">💻 System</option>
           <option value="dark">🌙 Dark</option>
           <option value="light">☀️ Light</option>
         </select>
 
-        <button onclick="togglePwaModal()" class="touch-bounce p-1.5 sm:px-2.5 sm:py-1 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[11px] flex items-center space-x-1 shrink-0" style="color: var(--text-main)">
+        <button onclick="togglePwaModal()" class="touch-bounce p-1.5 sm:px-2.5 sm:py-1 lg:px-3 lg:py-1.5 rounded-lg lg:rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[11px] lg:text-xs flex items-center space-x-1 shrink-0" style="color: var(--text-main)">
           <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
           </svg>
           <span class="hidden md:inline font-medium">Save</span>
         </button>
 
-        <button onclick="resetWorkspace()" class="touch-bounce px-2.5 py-1 rounded-lg btn-reset-contrast text-[11px] font-bold shadow-sm whitespace-nowrap shrink-0">
+        <button onclick="resetWorkspace()" class="touch-bounce px-2.5 py-1 lg:px-3.5 lg:py-1.5 rounded-lg lg:rounded-xl btn-reset-contrast text-[11px] lg:text-xs font-bold shadow-sm whitespace-nowrap shrink-0">
           Reset
         </button>
       </div>
@@ -307,55 +326,55 @@
   </header>
 
   <!-- MAIN RESPONSIVE WORKSPACE -->
-  <main class="flex-1 max-w-4xl mx-auto w-full px-3 sm:px-4 pt-3.5 sm:pt-5 space-y-4 md:space-y-0 md:grid md:grid-cols-12 md:gap-6">
+  <main class="flex-1 max-w-4xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-[1400px] mx-auto w-full px-3 sm:px-5 lg:px-8 pt-3.5 sm:pt-5 lg:pt-8 pb-8 space-y-4 md:space-y-0 md:grid md:grid-cols-12 md:gap-6 lg:gap-8">
 
     <!-- LEFT COLUMN: LIVE REC.709 LUT PREVIEWER & COLOR TELEMETRY -->
-    <div class="md:col-span-5 space-y-4">
-      <section class="glass-card specular-card rounded-2xl p-3.5 sm:p-4 space-y-3">
+    <div class="md:col-span-5 lg:col-span-6 space-y-4 lg:space-y-5">
+      <section class="glass-card specular-card rounded-2xl lg:rounded-3xl p-3.5 sm:p-4 lg:p-5 space-y-3 lg:space-y-4">
         
         <!-- Top Telemetry Header -->
-        <div class="flex items-center justify-between text-xs">
+        <div class="flex items-center justify-between text-xs lg:text-sm">
           <div class="flex items-center space-x-1.5">
             <span id="engineStatusDot" class="w-2 h-2 rounded-full bg-blue-500"></span>
-            <span id="engineStatusText" class="font-semibold tracking-tight text-[11px]" style="color: var(--text-main)">Identity Color Matrix (Neutral)</span>
+            <span id="engineStatusText" class="font-semibold tracking-tight text-[11px] lg:text-xs" style="color: var(--text-main)">Identity Color Matrix (Neutral)</span>
           </div>
-          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/5 border border-black/10 dark:border-white/10" style="color: var(--text-sub)">Rec.709</span>
+          <span class="text-[10px] lg:text-xs font-mono px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-full bg-black/10 dark:bg-white/5 border border-black/10 dark:border-white/10" style="color: var(--text-sub)">Rec.709</span>
         </div>
 
         <!-- Interactive Before / After Rec.709 Grade Viewport -->
-        <div class="relative w-full h-56 sm:h-60 rounded-xl overflow-hidden border border-black/15 dark:border-white/15 bg-black select-none group">
+        <div id="splitViewport" class="relative w-full h-56 sm:h-60 md:h-64 lg:h-72 xl:h-80 2xl:h-[350px] rounded-xl lg:rounded-2xl overflow-hidden border border-black/15 dark:border-white/15 bg-black select-none group cursor-ew-resize touch-none">
           <!-- Graded Canvas (Full Background) -->
-          <canvas id="previewGradedCanvas" width="480" height="320" class="block absolute inset-0 w-full h-full object-cover"></canvas>
+          <canvas id="previewGradedCanvas" width="640" height="400" class="block absolute inset-0 w-full h-full object-cover pointer-events-none"></canvas>
           
           <!-- Original Unedited Canvas (Clipped by Split Slider) -->
-          <div id="previewOriginalClip" class="absolute inset-0 overflow-hidden" style="width: 50%;">
-            <canvas id="previewOriginalCanvas" width="480" height="320" class="block w-full h-full object-cover max-w-none"></canvas>
+          <div id="previewOriginalClip" class="absolute inset-0 overflow-hidden pointer-events-none" style="width: 50%;">
+            <canvas id="previewOriginalCanvas" width="640" height="400" class="block w-full h-full object-cover max-w-none pointer-events-none"></canvas>
           </div>
 
           <!-- Vertical Divider Line -->
-          <div id="splitDividerLine" class="absolute top-0 bottom-0 w-0.5 bg-white/90 shadow-[0_0_10px_rgba(0,0,0,0.8)] pointer-events-none" style="left: 50%;">
-            <div class="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/95 text-gray-900 shadow-lg flex items-center justify-center border border-black/20">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 9l-3 3 3 3m8-6l3 3-3 3"/></svg>
+          <div id="splitDividerLine" class="absolute top-0 bottom-0 w-0.5 bg-white/95 shadow-[0_0_12px_rgba(0,0,0,0.85)] pointer-events-none" style="left: 50%;">
+            <div class="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-white/95 text-gray-900 shadow-[0_4px_16px_rgba(0,0,0,0.45),0_0_0_1.5px_rgba(255,255,255,0.85)] flex items-center justify-center border border-black/15 cursor-ew-resize pointer-events-none backdrop-blur-sm">
+              <svg class="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 9l-3 3 3 3m8-6l3 3-3 3"/></svg>
             </div>
           </div>
 
-          <!-- Invisible Range Input Overlay for Smooth Touch & Mouse Scrubbing -->
-          <input type="range" id="splitCompareRange" min="0" max="100" value="50" oninput="updateSplitPreview(this.value)" aria-label="Before and After Split Slider" class="split-slider absolute inset-0 w-full h-full opacity-0 z-20">
+          <!-- Invisible Range Input Overlay for Accessibility (Screen Readers / Keyboard Navigation) -->
+          <input type="range" id="splitCompareRange" min="0" max="100" value="50" oninput="updateSplitPreview(this.value)" aria-label="Before and After Split Slider" class="split-slider absolute inset-0 w-full h-full opacity-0 z-10 pointer-events-none">
 
           <!-- Corner Labels -->
-          <div class="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-md bg-black/65 backdrop-blur-md text-[9px] font-bold tracking-wider uppercase text-white/90 border border-white/15 pointer-events-none">
+          <div class="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-md bg-black/65 backdrop-blur-md text-[9px] lg:text-[10px] font-bold tracking-wider uppercase text-white/90 border border-white/15 pointer-events-none">
             Original
           </div>
-          <div class="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-md bg-blue-600/85 backdrop-blur-md text-[9px] font-bold tracking-wider uppercase text-white border border-white/20 pointer-events-none">
+          <div class="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-md bg-blue-600/85 backdrop-blur-md text-[9px] lg:text-[10px] font-bold tracking-wider uppercase text-white border border-white/20 pointer-events-none">
             LUT Applied
           </div>
 
           <!-- Bottom Sample Switcher -->
           <div class="absolute bottom-2 left-2 right-2 z-30 flex items-center justify-between pointer-events-none">
-            <span class="px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-[10px] font-mono text-gray-200 border border-white/10">
+            <span class="px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-full bg-black/75 backdrop-blur-md text-[10px] lg:text-xs font-mono text-gray-200 border border-white/10">
               Grid: <strong id="gridNodesBadge" class="text-blue-400">64³ (262,144)</strong>
             </span>
-            <button onclick="cycleTestScene()" class="pointer-events-auto touch-bounce px-2.5 py-1 rounded-full bg-black/80 hover:bg-black text-white text-[10px] font-semibold border border-white/20 backdrop-blur-md flex items-center space-x-1">
+            <button onclick="cycleTestScene()" class="pointer-events-auto touch-bounce px-2.5 py-1 lg:px-3 lg:py-1 rounded-full bg-black/80 hover:bg-black text-white text-[10px] lg:text-xs font-semibold border border-white/20 backdrop-blur-md flex items-center space-x-1">
               <span>Switch Scene</span>
             </button>
           </div>
@@ -363,23 +382,23 @@
 
         <!-- Color Shift Telemetry Bars -->
         <div class="pt-2 border-t border-black/10 dark:border-white/10 space-y-2">
-          <div class="flex items-center justify-between text-[11px]">
+          <div class="flex items-center justify-between text-[11px] lg:text-xs">
             <span class="font-semibold" style="color: var(--text-sub)">Tone & Chromatic Shift</span>
-            <span id="bitDepthBadge" class="font-mono text-[10px] font-bold text-emerald-500">Awaiting Graded TIFF</span>
+            <span id="bitDepthBadge" class="font-mono text-[10px] lg:text-xs font-bold text-emerald-500">Awaiting Graded TIFF</span>
           </div>
 
-          <div class="grid grid-cols-3 gap-2 pt-0.5">
-            <div class="p-2 rounded-xl border border-black/10 dark:border-white/10 text-center" style="background: var(--bg-subcard)">
-              <div class="text-[9px] uppercase font-semibold opacity-70" style="color: var(--text-sub)">Shadow Lift</div>
-              <div id="metricShadow" class="text-xs font-mono font-bold mt-0.5" style="color: var(--text-main)">0.0%</div>
+          <div class="grid grid-cols-3 gap-2 lg:gap-3 pt-0.5">
+            <div class="p-2 lg:p-3 rounded-xl lg:rounded-2xl border border-black/10 dark:border-white/10 text-center" style="background: var(--bg-subcard)">
+              <div class="text-[9px] lg:text-[10px] uppercase font-semibold opacity-70" style="color: var(--text-sub)">Shadow Lift</div>
+              <div id="metricShadow" class="text-xs lg:text-sm font-mono font-bold mt-0.5" style="color: var(--text-main)">0.0%</div>
             </div>
-            <div class="p-2 rounded-xl border border-black/10 dark:border-white/10 text-center" style="background: var(--bg-subcard)">
-              <div class="text-[9px] uppercase font-semibold opacity-70" style="color: var(--text-sub)">Mid Contrast</div>
-              <div id="metricContrast" class="text-xs font-mono font-bold mt-0.5 text-blue-500">1.00x</div>
+            <div class="p-2 lg:p-3 rounded-xl lg:rounded-2xl border border-black/10 dark:border-white/10 text-center" style="background: var(--bg-subcard)">
+              <div class="text-[9px] lg:text-[10px] uppercase font-semibold opacity-70" style="color: var(--text-sub)">Mid Contrast</div>
+              <div id="metricContrast" class="text-xs lg:text-sm font-mono font-bold mt-0.5 text-blue-500">1.00x</div>
             </div>
-            <div class="p-2 rounded-xl border border-black/10 dark:border-white/10 text-center" style="background: var(--bg-subcard)">
-              <div class="text-[9px] uppercase font-semibold opacity-70" style="color: var(--text-sub)">Highlight Peak</div>
-              <div id="metricHighlight" class="text-xs font-mono font-bold mt-0.5 text-pink-500">100%</div>
+            <div class="p-2 lg:p-3 rounded-xl lg:rounded-2xl border border-black/10 dark:border-white/10 text-center" style="background: var(--bg-subcard)">
+              <div class="text-[9px] lg:text-[10px] uppercase font-semibold opacity-70" style="color: var(--text-sub)">Highlight Peak</div>
+              <div id="metricHighlight" class="text-xs lg:text-sm font-mono font-bold mt-0.5 text-pink-500">100%</div>
             </div>
           </div>
         </div>
@@ -388,27 +407,27 @@
     </div>
 
     <!-- RIGHT COLUMN: WORKFLOW ENGINE (UPLOAD TIFF -> COMPILE .CUBE -> DOWNLOAD) -->
-    <div class="md:col-span-7 space-y-4">
+    <div class="md:col-span-7 lg:col-span-6 space-y-4 lg:space-y-5">
 
       <!-- STEP 1: COLLAPSIBLE ONE-TIME REFERENCE CARD -->
-      <section class="glass-card specular-card rounded-2xl p-3.5 sm:p-4">
+      <section class="glass-card specular-card rounded-2xl lg:rounded-3xl p-3.5 sm:p-4 lg:p-5">
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center space-x-3">
-            <div class="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center shrink-0 text-blue-500 font-bold text-xs">
+            <div class="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center shrink-0 text-blue-500 font-bold text-xs lg:text-sm">
               1
             </div>
             <div>
               <div class="flex items-center space-x-1.5">
-                <h2 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Lightroom Reference Card</h2>
-                <span class="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">Save Once</span>
+                <h2 class="text-xs sm:text-sm lg:text-base font-bold" style="color: var(--text-main)">Lightroom Reference Card</h2>
+                <span class="text-[9px] lg:text-[10px] font-semibold px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">Save Once</span>
               </div>
-              <p class="text-[11px] leading-snug mt-0.5" style="color: var(--text-sub)">
+              <p class="text-[11px] lg:text-xs leading-snug mt-0.5" style="color: var(--text-sub)">
                 Save this lossless 512×512 HALD card to your phone once. Paste your Lightroom preset onto it and export as <strong>TIF</strong>.
               </p>
             </div>
           </div>
 
-          <button onclick="downloadIdentityHald()" class="touch-bounce shrink-0 px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-blue-600 hover:text-white border border-black/10 dark:border-white/15 text-xs font-bold transition-all flex items-center space-x-1.5" style="color: var(--text-main)">
+          <button onclick="downloadIdentityHald()" class="touch-bounce shrink-0 px-3 py-2 lg:px-4 lg:py-2.5 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-blue-600 hover:text-white border border-black/10 dark:border-white/15 text-xs lg:text-sm font-bold transition-all flex items-center space-x-1.5" style="color: var(--text-main)">
             <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             <span>Get Card</span>
           </button>
@@ -416,23 +435,23 @@
       </section>
 
       <!-- STEP 2: ZERO-FRICTION TIFF / LOSSLESS DROPZONE -->
-      <section class="glass-card specular-card rounded-2xl p-4 sm:p-5 space-y-4">
+      <section class="glass-card specular-card rounded-2xl lg:rounded-3xl p-4 sm:p-5 lg:p-6 space-y-4 lg:space-y-5">
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center space-x-2.5">
-            <div class="w-7 h-7 rounded-lg bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-500 font-bold text-xs shrink-0">
+            <div class="w-7 h-7 lg:w-8 lg:h-8 rounded-lg text-xs lg:text-sm bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-500 font-bold shrink-0">
               2
             </div>
             <div>
-              <h2 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Drop Graded Lightroom Export</h2>
-              <p class="text-[11px]" style="color: var(--text-sub)">Supports 16-bit & 8-bit <strong>.TIF / .TIFF</strong> (or lossless .PNG)</p>
+              <h2 class="text-xs sm:text-sm lg:text-base font-bold" style="color: var(--text-main)">Drop Graded Lightroom Export</h2>
+              <p class="text-[11px] lg:text-xs" style="color: var(--text-sub)">Supports 16-bit & 8-bit <strong>.TIF / .TIFF</strong> (or lossless .PNG)</p>
             </div>
           </div>
 
-          <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-violet-500/10 text-violet-400 border border-violet-500/20 shrink-0">64³ Precision</span>
+          <span class="text-[10px] lg:text-xs font-mono font-bold px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-md bg-violet-500/10 text-violet-400 border border-violet-500/20 shrink-0">64³ Precision</span>
         </div>
 
         <!-- Interactive Dropzone -->
-        <div id="dropZone" onclick="document.getElementById('fileInput').click()" class="dropzone-area rounded-2xl p-6 sm:p-8 text-center cursor-pointer relative overflow-hidden">
+        <div id="dropZone" onclick="document.getElementById('fileInput').click()" class="dropzone-area rounded-2xl lg:rounded-3xl p-6 sm:p-8 lg:p-10 xl:p-12 text-center cursor-pointer relative overflow-hidden">
           <input type="file" id="fileInput" accept=".tif,.tiff,image/tiff,.png,image/png,.jpg,.jpeg,image/jpeg" class="hidden" onchange="handleFileSelect(event)">
 
           <!-- Processing Laser Scanner Overlay (Hidden by Default) -->
@@ -444,17 +463,17 @@
           </div>
 
           <!-- Default Prompt State -->
-          <div id="dropZonePrompt" class="space-y-2.5">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600/20 to-pink-600/20 border border-blue-500/30 mx-auto flex items-center justify-center shadow-inner">
-              <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div id="dropZonePrompt" class="space-y-2.5 lg:space-y-3.5">
+            <div class="w-12 h-12 lg:w-16 lg:h-16 rounded-2xl bg-gradient-to-tr from-blue-600/20 to-pink-600/20 border border-blue-500/30 mx-auto flex items-center justify-center shadow-inner">
+              <svg class="w-6 h-6 lg:w-8 lg:h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
               </svg>
             </div>
             <div>
-              <p class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Tap to choose TIFF file or drag & drop</p>
-              <p class="text-[11px] mt-0.5" style="color: var(--text-sub)">100% private — processed locally on your device</p>
+              <p class="text-xs sm:text-sm lg:text-base font-bold" style="color: var(--text-main)">Tap to choose TIFF file or drag & drop</p>
+              <p class="text-[11px] lg:text-xs mt-0.5" style="color: var(--text-sub)">100% private — processed locally on your device</p>
             </div>
-            <div class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[10px] font-mono" style="color: var(--text-sub)">
+            <div class="inline-flex items-center space-x-1.5 px-2.5 py-1 lg:px-3 lg:py-1.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[10px] lg:text-xs font-mono" style="color: var(--text-sub)">
               <span>TIF / TIFF 16-Bit</span>
               <span>•</span>
               <span>PNG</span>
@@ -465,27 +484,27 @@
         </div>
 
         <!-- STEP 3: COMPILED .CUBE OUTPUT & DOWNLOAD BAR (REVEALS WITH SPRING PHYSICS) -->
-        <div id="exportSection" class="hidden spring-reveal pt-2 border-t border-black/10 dark:border-white/10 space-y-3">
+        <div id="exportSection" class="hidden spring-reveal pt-2 lg:pt-3 border-t border-black/10 dark:border-white/10 space-y-3 lg:space-y-4">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold uppercase tracking-wider text-emerald-500 flex items-center space-x-1.5">
+            <span class="text-xs lg:text-sm font-bold uppercase tracking-wider text-emerald-500 flex items-center space-x-1.5">
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
               <span>.CUBE LUT Ready</span>
             </span>
-            <span id="fileInfoTag" class="text-[10px] font-mono opacity-80" style="color: var(--text-sub)">512×512 • 16-bit</span>
+            <span id="fileInfoTag" class="text-[10px] lg:text-xs font-mono opacity-80" style="color: var(--text-sub)">512×512 • 16-bit</span>
           </div>
 
           <!-- LUT Title Input -->
           <div class="space-y-1">
-            <label for="lutNameInput" class="text-[10px] font-semibold uppercase tracking-wider" style="color: var(--text-sub)">Preset / Camera LUT Filename</label>
-            <div class="flex items-center rounded-xl border border-black/15 dark:border-white/15 px-3 py-2" style="background: var(--input-bg)">
-              <input type="text" id="lutNameInput" value="Lightroom_Signature_Rec709" placeholder="Enter LUT name..." class="w-full bg-transparent text-xs font-bold focus:outline-none" style="color: var(--text-main)">
-              <span class="text-xs font-mono font-bold text-blue-500 pl-2">.cube</span>
+            <label for="lutNameInput" class="text-[10px] lg:text-xs font-semibold uppercase tracking-wider" style="color: var(--text-sub)">Preset / Camera LUT Filename</label>
+            <div class="flex items-center rounded-xl lg:rounded-2xl border border-black/15 dark:border-white/15 px-3 py-2 lg:px-4 lg:py-2.5" style="background: var(--input-bg)">
+              <input type="text" id="lutNameInput" value="Lightroom_Signature_Rec709" placeholder="Enter LUT name..." class="w-full bg-transparent text-xs lg:text-sm font-bold focus:outline-none" style="color: var(--text-main)">
+              <span class="text-xs lg:text-sm font-mono font-bold text-blue-500 pl-2">.cube</span>
             </div>
           </div>
 
           <!-- Primary Hero Download Button -->
-          <button onclick="downloadCubeFile()" class="touch-bounce btn-hero-shimmer w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-violet-600 to-pink-600 font-bold text-white text-xs sm:text-sm flex items-center justify-center space-x-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <button onclick="downloadCubeFile()" class="touch-bounce btn-hero-shimmer w-full py-3.5 lg:py-4 rounded-xl lg:rounded-2xl bg-gradient-to-r from-blue-600 via-violet-600 to-pink-600 font-bold text-white text-xs sm:text-sm lg:text-base flex items-center justify-center space-x-2">
+            <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             <span>Download .CUBE Video LUT</span>
           </button>
         </div>
@@ -952,8 +971,64 @@
     }
 
     function updateSplitPreview(val) {
-      document.getElementById('previewOriginalClip').style.width = `${val}%`;
-      document.getElementById('splitDividerLine').style.left = `${val}%`;
+      const numVal = Math.max(0, Math.min(100, parseFloat(val) || 50));
+      document.getElementById('previewOriginalClip').style.width = `${numVal}%`;
+      document.getElementById('splitDividerLine').style.left = `${numVal}%`;
+      const rangeInput = document.getElementById('splitCompareRange');
+      if (rangeInput && Math.abs(parseFloat(rangeInput.value) - numVal) > 0.01) {
+        rangeInput.value = numVal;
+      }
+    }
+
+    function initSplitSlider() {
+      const viewport = document.getElementById('splitViewport');
+      const rangeInput = document.getElementById('splitCompareRange');
+      if (!viewport) return;
+
+      let isDragging = false;
+
+      function updateFromPointer(clientX) {
+        const rect = viewport.getBoundingClientRect();
+        if (rect.width <= 0) return;
+        const offsetX = clientX - rect.left;
+        const pct = Math.max(0, Math.min(100, (offsetX / rect.width) * 100));
+        updateSplitPreview(pct);
+      }
+
+      viewport.addEventListener('pointerdown', (e) => {
+        // If clicking on interactive elements like Switch Scene button, don't drag
+        if (e.target.closest('button')) return;
+        isDragging = true;
+        try {
+          viewport.setPointerCapture(e.pointerId);
+        } catch (_) {}
+        updateFromPointer(e.clientX);
+        e.preventDefault();
+      });
+
+      viewport.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        updateFromPointer(e.clientX);
+      });
+
+      const endDrag = (e) => {
+        if (isDragging) {
+          isDragging = false;
+          try {
+            viewport.releasePointerCapture(e.pointerId);
+          } catch (_) {}
+        }
+      };
+
+      viewport.addEventListener('pointerup', endDrag);
+      viewport.addEventListener('pointercancel', endDrag);
+
+      // Keyboard support on the range input
+      if (rangeInput) {
+        rangeInput.addEventListener('input', (e) => {
+          updateSplitPreview(e.target.value);
+        });
+      }
     }
 
     function cycleTestScene() {
@@ -972,6 +1047,7 @@
       document.getElementById('metricShadow').innerText = '0.0%';
       document.getElementById('metricContrast').innerText = '1.00x';
       document.getElementById('metricHighlight').innerText = '100%';
+      updateSplitPreview(50);
       renderPreviewScenes();
       showToast('Workspace reset to neutral Rec.709');
     }
@@ -1019,6 +1095,7 @@
     function initApp() {
       activeHaldFloatBuffer = generateIdentityHaldBuffer();
       initDropzone();
+      initSplitSlider();
       renderPreviewScenes();
 
       const themeSelector = document.getElementById('themeSelector');
