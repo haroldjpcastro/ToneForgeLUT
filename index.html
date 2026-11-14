@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system" class="w-full max-w-full overflow-x-hidden">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b0c10">
+  <title>ToneForge LUT - Lightroom to .CUBE Color Engine</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- UTIF.js for Native 16-Bit & 8-Bit Uncompressed/LZW TIFF Decoding in Browser -->
+  <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            iosBlue: '#2563eb',
+            iosPurple: '#7c3aed',
+            iosPink: '#db2777',
+            iosOrange: '#f97316',
+            iosGreen: '#10b981'
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['"SF Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* ==========================================================================
+       DYNAMIC DESIGN SYSTEM VARIABLES (GELSTACK PRO + APPLE SPECULAR EVOLUTION)
+       ========================================================================== */
+    :root, html.dark {
+      --bg-main: #0b0c10;
+      --bg-card: rgba(22, 24, 34, 0.86);
+      --bg-subcard: rgba(27, 30, 44, 0.72);
+      --border-color: rgba(255, 255, 255, 0.11);
+      --specular-edge: inset 0 1px 0 0 rgba(255, 255, 255, 0.16);
+      --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.65);
+      --text-main: #f3f4f6;
+      --text-sub: #9ca3af;
+      --tabstrip-bg: rgba(15, 17, 26, 0.85);
+      --input-bg: rgba(255, 255, 255, 0.07);
+      --select-opt-bg: #111827;
+      --select-opt-fg: #f3f4f6;
+      --btn-reset-bg: rgba(127, 29, 29, 0.4);
+      --btn-reset-fg: #fca5a5;
+      --btn-reset-border: rgba(220, 38, 38, 0.4);
+      --dropzone-bg: rgba(255, 255, 255, 0.025);
+      --dropzone-hover: rgba(37, 99, 235, 0.08);
+      --ambient-glow-1: rgba(37, 99, 235, 0.14);
+      --ambient-glow-2: rgba(124, 58, 237, 0.12);
+    }
+
+    html.light, html:not(.dark) {
+      --bg-main: #f4f5f8;
+      --bg-card: rgba(255, 255, 255, 0.92);
+      --bg-subcard: #eef0f5;
+      --border-color: rgba(0, 0, 0, 0.09);
+      --specular-edge: inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+      --card-shadow: 0 18px 36px -14px rgba(15, 23, 42, 0.09);
+      --text-main: #111827;
+      --text-sub: #4b5563;
+      --tabstrip-bg: rgba(255, 255, 255, 0.88);
+      --input-bg: rgba(0, 0, 0, 0.05);
+      --select-opt-bg: #ffffff;
+      --select-opt-fg: #111827;
+      --btn-reset-bg: rgba(254, 226, 226, 0.95);
+      --btn-reset-fg: #dc2626;
+      --btn-reset-border: rgba(239, 68, 68, 0.45);
+      --dropzone-bg: rgba(0, 0, 0, 0.02);
+      --dropzone-hover: rgba(37, 99, 235, 0.05);
+      --ambient-glow-1: rgba(37, 99, 235, 0.07);
+      --ambient-glow-2: rgba(219, 39, 119, 0.05);
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.35s ease;
+    }
+
+    /* Subtle Ambient Cinema Backdrop */
+    .ambient-backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background:
+        radial-gradient(circle at 18% 12%, var(--ambient-glow-1) 0%, transparent 45%),
+        radial-gradient(circle at 85% 75%, var(--ambient-glow-2) 0%, transparent 48%);
+    }
+
+    /* Frosted Glass Navigation & Specular Cards */
+    .glass-nav {
+      background: var(--tabstrip-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--specular-edge), var(--card-shadow);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.35s ease;
+    }
+
+    /* Interactive Cursor / Touch Specular Spotlight on Cards */
+    .specular-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        420px circle at var(--mouse-x, 50%) var(--mouse-y, 0%),
+        rgba(255, 255, 255, 0.07),
+        transparent 60%
+      );
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      z-index: 1;
+    }
+    html.light .specular-card::before {
+      background: radial-gradient(
+        420px circle at var(--mouse-x, 50%) var(--mouse-y, 0%),
+        rgba(37, 99, 235, 0.05),
+        transparent 60%
+      );
+    }
+    .specular-card:hover::before {
+      opacity: 1;
+    }
+
+    /* Restrained Apple-Grade Hero Light Sweep */
+    .btn-hero-shimmer {
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 10px 25px -6px rgba(124, 58, 237, 0.42);
+    }
+    .btn-hero-shimmer::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -150%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        60deg,
+        transparent 35%,
+        rgba(255, 255, 255, 0.38) 50%,
+        transparent 65%
+      );
+      transform: rotate(25deg);
+      animation: ambientSweep 6.5s infinite cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+    @keyframes ambientSweep {
+      0% { left: -150%; }
+      22% { left: 150%; }
+      100% { left: 150%; }
+    }
+
+    /* Laser Scan Line during TIFF Decoding */
+    @keyframes scanPulse {
+      0% { transform: translateY(-100%); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(300%); opacity: 0; }
+    }
+    .scan-beam {
+      animation: scanPulse 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    /* Spring Reveal Choreography */
+    .spring-reveal {
+      animation: springUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes springUp {
+      0% { opacity: 0; transform: translateY(14px) scale(0.985); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .touch-bounce {
+      transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease;
+    }
+    .touch-bounce:active {
+      transform: scale(0.965);
+      opacity: 0.9;
+    }
+
+    .btn-reset-contrast {
+      background: var(--btn-reset-bg);
+      color: var(--btn-reset-fg);
+      border: 1px solid var(--btn-reset-border);
+    }
+
+    .theme-select {
+      background-color: var(--input-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      padding-right: 1.75rem;
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+      background-size: 0.75rem 0.75rem;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f3f4f6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 15l5 5 5-5M7 9l5-5 5 5'/%3E%3C/svg%3E");
+    }
+    html.light .theme-select, html:not(.dark) .theme-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23111827' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 15l5 5 5-5M7 9l5-5 5 5'/%3E%3C/svg%3E");
+    }
+    .theme-select option {
+      background-color: var(--select-opt-bg);
+      color: var(--select-opt-fg);
+    }
+
+    /* Dropzone Styling */
+    .dropzone-area {
+      background: var(--dropzone-bg);
+      border: 1.5px dashed var(--border-color);
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .dropzone-area.drag-over, .dropzone-area:hover {
+      background: var(--dropzone-hover);
+      border-color: #3b82f6;
+      transform: translateY(-1px);
+    }
+
+    /* Custom Range Input for Split Comparison Slider */
+    input[type="range"].split-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: ew-resize;
+    }
+    input[type="range"].split-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 28px;
+      width: 28px;
+      border-radius: 9999px;
+      background: #ffffff;
+      border: 2px solid #2563eb;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+      cursor: ew-resize;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col pb-12 w-full max-w-full overflow-x-hidden">
+  <div class="ambient-backdrop"></div>
+
+  <!-- HEADER NAVIGATION BAR (MIRRORS GELSTACK PRO) -->
+  <header class="sticky top-0 z-40 glass-nav border-b border-black/10 dark:border-white/10 px-3 sm:px-4 py-2.5">
+    <div class="max-w-4xl mx-auto flex items-center justify-between gap-1.5 sm:gap-3 w-full">
+      
+      <!-- Brand Identity -->
+      <div class="flex items-center space-x-2 shrink-0">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-violet-600 to-pink-600 flex items-center justify-center shadow-md shadow-violet-950/30 border border-white/20 shrink-0">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+        </div>
+        <div class="leading-tight">
+          <div class="flex items-center space-x-1.5">
+            <h1 class="text-xs sm:text-base font-bold tracking-tight whitespace-nowrap" style="color: var(--text-main)">ToneForge LUT</h1>
+            <span class="hidden sm:inline-block text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-500 dark:text-blue-400 border border-blue-500/30 tracking-wider">16-BIT .CUBE</span>
+          </div>
+          <p class="hidden sm:block text-[10px] opacity-75 whitespace-nowrap" style="color: var(--text-sub)">Lightroom to Rec.709 Video Color Engine</p>
+        </div>
+      </div>
+
+      <!-- Right Controls: Theme Switcher, Save PWA, Reset -->
+      <div class="flex items-center space-x-1.5 shrink-0">
+        <select id="themeSelector" onchange="setTheme(this.value)" aria-label="Theme Mode" class="theme-select pl-2.5 pr-7 py-1 rounded-lg text-[11px] font-semibold focus:outline-none cursor-pointer whitespace-nowrap">
+          <option value="system">💻 System</option>
+          <option value="dark">🌙 Dark</option>
+          <option value="light">☀️ Light</option>
+        </select>
+
+        <button onclick="togglePwaModal()" class="touch-bounce p-1.5 sm:px-2.5 sm:py-1 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[11px] flex items-center space-x-1 shrink-0" style="color: var(--text-main)">
+          <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+          <span class="hidden md:inline font-medium">Save</span>
+        </button>
+
+        <button onclick="resetWorkspace()" class="touch-bounce px-2.5 py-1 rounded-lg btn-reset-contrast text-[11px] font-bold shadow-sm whitespace-nowrap shrink-0">
+          Reset
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN RESPONSIVE WORKSPACE -->
+  <main class="flex-1 max-w-4xl mx-auto w-full px-3 sm:px-4 pt-3.5 sm:pt-5 space-y-4 md:space-y-0 md:grid md:grid-cols-12 md:gap-6">
+
+    <!-- LEFT COLUMN: LIVE REC.709 LUT PREVIEWER & COLOR TELEMETRY -->
+    <div class="md:col-span-5 space-y-4">
+      <section class="glass-card specular-card rounded-2xl p-3.5 sm:p-4 space-y-3">
+        
+        <!-- Top Telemetry Header -->
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center space-x-1.5">
+            <span id="engineStatusDot" class="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span id="engineStatusText" class="font-semibold tracking-tight text-[11px]" style="color: var(--text-main)">Identity Color Matrix (Neutral)</span>
+          </div>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/5 border border-black/10 dark:border-white/10" style="color: var(--text-sub)">Rec.709</span>
+        </div>
+
+        <!-- Interactive Before / After Rec.709 Grade Viewport -->
+        <div class="relative w-full h-56 sm:h-60 rounded-xl overflow-hidden border border-black/15 dark:border-white/15 bg-black select-none group">
+          <!-- Graded Canvas (Full Background) -->
+          <canvas id="previewGradedCanvas" width="480" height="320" class="block absolute inset-0 w-full h-full object-cover"></canvas>
+          
+          <!-- Original Unedited Canvas (Clipped by Split Slider) -->
+          <div id="previewOriginalClip" class="absolute inset-0 overflow-hidden" style="width: 50%;">
+            <canvas id="previewOriginalCanvas" width="480" height="320" class="block w-full h-full object-cover max-w-none"></canvas>
+          </div>
+
+          <!-- Vertical Divider Line -->
+          <div id="splitDividerLine" class="absolute top-0 bottom-0 w-0.5 bg-white/90 shadow-[0_0_10px_rgba(0,0,0,0.8)] pointer-events-none" style="left: 50%;">
+            <div class="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/95 text-gray-900 shadow-lg flex items-center justify-center border border-black/20">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 9l-3 3 3 3m8-6l3 3-3 3"/></svg>
+            </div>
+          </div>
+
+          <!-- Invisible Range Input Overlay for Smooth Touch & Mouse Scrubbing -->
+          <input type="range" id="splitCompareRange" min="0" max="100" value="50" oninput="updateSplitPreview(this.value)" aria-label="Before and After Split Slider" class="split-slider absolute inset-0 w-full h-full opacity-0 z-20">
+
+          <!-- Corner Labels -->
+          <div class="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-md bg-black/65 backdrop-blur-md text-[9px] font-bold tracking-wider uppercase text-white/90 border border-white/15 pointer-events-none">
+            Original
+          </div>
+          <div class="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-md bg-blue-600/85 backdrop-blur-md text-[9px] font-bold tracking-wider uppercase text-white border border-white/20 pointer-events-none">
+            LUT Applied
+          </div>
+
+          <!-- Bottom Sample Switcher -->
+          <div class="absolute bottom-2 left-2 right-2 z-30 flex items-center justify-between pointer-events-none">
+            <span class="px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-[10px] font-mono text-gray-200 border border-white/10">
+              Grid: <strong id="gridNodesBadge" class="text-blue-400">64³ (262,144)</strong>
+            </span>
+            <button onclick="cycleTestScene()" class="pointer-events-auto touch-bounce px-2.5 py-1 rounded-full bg-black/80 hover:bg-black text-white text-[10px] font-semibold border border-white/20 backdrop-blur-md flex items-center space-x-1">
+              <span>Switch Scene</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Color Shift Telemetry Bars -->
+        <div class="pt-2 border-t border-black/10 dark:border-white/10 space-y-2">
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="font-semibold" style="color: var(--text-sub)">Tone & Chromatic Shift</span>
+            <span id="bitDepthBadge" class="font-mono text-[10px] font-bold text-emerald-500">Awaiting Graded TIFF</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 pt-0.5">
+            <div class="p-2 rounded-xl border border-black/10 dark:border-white/10 text-center" style="background: var(--bg-subcard)">
+              <div class="text-[9px] uppercase font-semibold opacity-70" style="color: var(--text-sub)">Shadow Lift</div>
+              <div id="metricShadow" class="text-xs font-mono font-bold mt-0.5" style="color: var(--text-main)">0.0%</div>
+            </div>
+            <div class="p-2 rounded-xl border border-black/10 dark:border-white/10 text-center" style="background: var(--bg-subcard)">
+              <div class="text-[9px] uppercase font-semibold opacity-70" style="color: var(--text-sub)">Mid Contrast</div>
+              <div id="metricContrast" class="text-xs font-mono font-bold mt-0.5 text-blue-500">1.00x</div>
+            </div>
+            <div class="p-2 rounded-xl border border-black/10 dark:border-white/10 text-center" style="background: var(--bg-subcard)">
+              <div class="text-[9px] uppercase font-semibold opacity-70" style="color: var(--text-sub)">Highlight Peak</div>
+              <div id="metricHighlight" class="text-xs font-mono font-bold mt-0.5 text-pink-500">100%</div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+
+    <!-- RIGHT COLUMN: WORKFLOW ENGINE (UPLOAD TIFF -> COMPILE .CUBE -> DOWNLOAD) -->
+    <div class="md:col-span-7 space-y-4">
+
+      <!-- STEP 1: COLLAPSIBLE ONE-TIME REFERENCE CARD -->
+      <section class="glass-card specular-card rounded-2xl p-3.5 sm:p-4">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center shrink-0 text-blue-500 font-bold text-xs">
+              1
+            </div>
+            <div>
+              <div class="flex items-center space-x-1.5">
+                <h2 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Lightroom Reference Card</h2>
+                <span class="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">Save Once</span>
+              </div>
+              <p class="text-[11px] leading-snug mt-0.5" style="color: var(--text-sub)">
+                Save this lossless 512×512 HALD card to your phone once. Paste your Lightroom preset onto it and export as <strong>TIF</strong>.
+              </p>
+            </div>
+          </div>
+
+          <button onclick="downloadIdentityHald()" class="touch-bounce shrink-0 px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-blue-600 hover:text-white border border-black/10 dark:border-white/15 text-xs font-bold transition-all flex items-center space-x-1.5" style="color: var(--text-main)">
+            <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>Get Card</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- STEP 2: ZERO-FRICTION TIFF / LOSSLESS DROPZONE -->
+      <section class="glass-card specular-card rounded-2xl p-4 sm:p-5 space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-7 h-7 rounded-lg bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-500 font-bold text-xs shrink-0">
+              2
+            </div>
+            <div>
+              <h2 class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Drop Graded Lightroom Export</h2>
+              <p class="text-[11px]" style="color: var(--text-sub)">Supports 16-bit & 8-bit <strong>.TIF / .TIFF</strong> (or lossless .PNG)</p>
+            </div>
+          </div>
+
+          <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-violet-500/10 text-violet-400 border border-violet-500/20 shrink-0">64³ Precision</span>
+        </div>
+
+        <!-- Interactive Dropzone -->
+        <div id="dropZone" onclick="document.getElementById('fileInput').click()" class="dropzone-area rounded-2xl p-6 sm:p-8 text-center cursor-pointer relative overflow-hidden">
+          <input type="file" id="fileInput" accept=".tif,.tiff,image/tiff,.png,image/png,.jpg,.jpeg,image/jpeg" class="hidden" onchange="handleFileSelect(event)">
+
+          <!-- Processing Laser Scanner Overlay (Hidden by Default) -->
+          <div id="processingOverlay" class="hidden absolute inset-0 bg-black/75 backdrop-blur-md z-20 flex flex-col items-center justify-center p-4">
+            <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500 via-violet-500 to-pink-500 scan-beam"></div>
+            <div class="w-10 h-10 rounded-full border-2 border-blue-500 border-t-transparent animate-spin mb-3"></div>
+            <p id="processingLabel" class="text-xs font-bold text-white tracking-wide">Decoding 16-Bit TIFF Buffer...</p>
+            <p class="text-[10px] text-gray-300 mt-1 font-mono">Mapping 262,144 RGB Color Vectors</p>
+          </div>
+
+          <!-- Default Prompt State -->
+          <div id="dropZonePrompt" class="space-y-2.5">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600/20 to-pink-600/20 border border-blue-500/30 mx-auto flex items-center justify-center shadow-inner">
+              <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs sm:text-sm font-bold" style="color: var(--text-main)">Tap to choose TIFF file or drag & drop</p>
+              <p class="text-[11px] mt-0.5" style="color: var(--text-sub)">100% private — processed locally on your device</p>
+            </div>
+            <div class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[10px] font-mono" style="color: var(--text-sub)">
+              <span>TIF / TIFF 16-Bit</span>
+              <span>•</span>
+              <span>PNG</span>
+              <span>•</span>
+              <span>Rec.709</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: COMPILED .CUBE OUTPUT & DOWNLOAD BAR (REVEALS WITH SPRING PHYSICS) -->
+        <div id="exportSection" class="hidden spring-reveal pt-2 border-t border-black/10 dark:border-white/10 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-500 flex items-center space-x-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              <span>.CUBE LUT Ready</span>
+            </span>
+            <span id="fileInfoTag" class="text-[10px] font-mono opacity-80" style="color: var(--text-sub)">512×512 • 16-bit</span>
+          </div>
+
+          <!-- LUT Title Input -->
+          <div class="space-y-1">
+            <label for="lutNameInput" class="text-[10px] font-semibold uppercase tracking-wider" style="color: var(--text-sub)">Preset / Camera LUT Filename</label>
+            <div class="flex items-center rounded-xl border border-black/15 dark:border-white/15 px-3 py-2" style="background: var(--input-bg)">
+              <input type="text" id="lutNameInput" value="Lightroom_Signature_Rec709" placeholder="Enter LUT name..." class="w-full bg-transparent text-xs font-bold focus:outline-none" style="color: var(--text-main)">
+              <span class="text-xs font-mono font-bold text-blue-500 pl-2">.cube</span>
+            </div>
+          </div>
+
+          <!-- Primary Hero Download Button -->
+          <button onclick="downloadCubeFile()" class="touch-bounce btn-hero-shimmer w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-violet-600 to-pink-600 font-bold text-white text-xs sm:text-sm flex items-center justify-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>Download .CUBE Video LUT</span>
+          </button>
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- iOS PWA SAVE MODAL (MIRRORS GELSTACK PRO) -->
+  <div id="pwaModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+    <div class="glass-card w-full max-w-sm rounded-2xl p-5 space-y-4 text-center border border-white/10">
+      <div class="w-12 h-12 rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-500/30 mx-auto flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+      </div>
+      <h3 class="text-base font-bold" style="color: var(--text-main)">Save ToneForge LUT on iPhone</h3>
+      <p class="text-xs leading-relaxed" style="color: var(--text-sub)">
+        Add this tool to your Home Screen for 1-tap access right after exporting from Lightroom Mobile.
+      </p>
+      <div class="text-left bg-black/20 p-3 rounded-xl space-y-2 text-xs border border-white/10" style="color: var(--text-main)">
+        <div class="flex items-center space-x-2">
+          <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">1</span>
+          <span>Tap the <strong>Share</strong> icon in Safari's bottom toolbar.</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">2</span>
+          <span>Scroll down and select <strong>"Add to Home Screen"</strong>.</span>
+        </div>
+      </div>
+      <button onclick="togglePwaModal()" class="w-full py-2.5 rounded-xl bg-blue-600 font-semibold text-white text-xs touch-bounce">
+        Got it!
+      </button>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toastNotification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-black/90 border border-blue-500/40 text-white text-xs font-medium shadow-2xl transition-all duration-300 opacity-0 pointer-events-none transform translate-y-4 flex items-center space-x-2">
+    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+    <span id="toastMessage">Ready!</span>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       GLOBAL STATE & HALD 64 (512x512) CONSTANTS
+       ========================================================================== */
+    const HALD_LEVEL = 64; // 64^3 = 262,144 exact RGB nodes -> 512 x 512 px
+    const HALD_DIM = 512;
+
+    // Stores decoded 64x64x64 floating-point RGB lookup table [r, g, b] in 0.0 - 1.0
+    let activeHaldFloatBuffer = null;
+    let lastUploadedFilename = "Lightroom_Preset";
+    let lastBitDepthLabel = "Identity";
+    let currentSceneIndex = 0;
+
+    /* ==========================================================================
+       APPLE.COM-STYLE SPECULAR CURSOR / TOUCH SPOTLIGHT TRACKING
+       ========================================================================== */
+    document.addEventListener('pointermove', (e) => {
+      document.querySelectorAll('.specular-card').forEach(card => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+        card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+      });
+    });
+
+    /* ==========================================================================
+       1. LOSSLESS 512x512 HALD-64 IDENTITY GENERATOR (ONE-TIME REFERENCE CARD)
+       ========================================================================== */
+    function generateIdentityHaldBuffer() {
+      const totalPixels = HALD_LEVEL * HALD_LEVEL * HALD_LEVEL;
+      const buf = new Float32Array(totalPixels * 3);
+      let ptr = 0;
+      for (let b = 0; b < HALD_LEVEL; b++) {
+        for (let g = 0; g < HALD_LEVEL; g++) {
+          for (let r = 0; r < HALD_LEVEL; r++) {
+            buf[ptr++] = r / (HALD_LEVEL - 1);
+            buf[ptr++] = g / (HALD_LEVEL - 1);
+            buf[ptr++] = b / (HALD_LEVEL - 1);
+          }
+        }
+      }
+      return buf;
+    }
+
+    function downloadIdentityHald() {
+      triggerHaptic();
+      const canvas = document.createElement('canvas');
+      canvas.width = HALD_DIM;
+      canvas.height = HALD_DIM;
+      const ctx = canvas.getContext('2d');
+      const imgData = ctx.createImageData(HALD_DIM, HALD_DIM);
+      const data = imgData.data;
+
+      let idx = 0;
+      for (let b = 0; b < HALD_LEVEL; b++) {
+        for (let g = 0; g < HALD_LEVEL; g++) {
+          for (let r = 0; r < HALD_LEVEL; r++) {
+            data[idx++] = Math.round((r / (HALD_LEVEL - 1)) * 255);
+            data[idx++] = Math.round((g / (HALD_LEVEL - 1)) * 255);
+            data[idx++] = Math.round((b / (HALD_LEVEL - 1)) * 255);
+            data[idx++] = 255;
+          }
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ToneForge_HALD64_Reference.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Reference card downloaded! Import into Lightroom.');
+      }, 'image/png');
+    }
+
+    /* ==========================================================================
+       2. NATIVE 16-BIT & 8-BIT TIFF + LOSSLESS PNG/JPG DECODER
+       ========================================================================== */
+    function initDropzone() {
+      const dz = document.getElementById('dropZone');
+      ['dragenter', 'dragover'].forEach(evt => {
+        dz.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dz.classList.add('drag-over');
+        });
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        dz.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dz.classList.remove('drag-over');
+        });
+      });
+      dz.addEventListener('drop', (e) => {
+        const files = e.dataTransfer?.files;
+        if (files && files.length > 0) processUploadedFile(files[0]);
+      });
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files?.[0];
+      if (file) processUploadedFile(file);
+    }
+
+    async function processUploadedFile(file) {
+      triggerHaptic();
+      const overlay = document.getElementById('processingOverlay');
+      const procLabel = document.getElementById('processingLabel');
+      overlay.classList.remove('hidden');
+
+      const baseName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_');
+      lastUploadedFilename = baseName || 'Lightroom_Grade';
+      document.getElementById('lutNameInput').value = lastUploadedFilename;
+
+      await new Promise(r => setTimeout(r, 60));
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const isTiff = /\.tiff?$/i.test(file.name) || file.type === 'image/tiff';
+
+        if (isTiff && typeof UTIF !== 'undefined') {
+          procLabel.innerText = 'Decoding 16-Bit TIFF Pixel Matrix...';
+          await new Promise(r => setTimeout(r, 30));
+          decodeTiffBuffer(arrayBuffer);
+        } else {
+          procLabel.innerText = 'Extracting Lossless Color Grid...';
+          await decodeStandardImageBuffer(file);
+        }
+
+        updateTelemetryMetrics();
+        renderPreviewScenes();
+
+        const exportSec = document.getElementById('exportSection');
+        exportSec.classList.remove('hidden');
+        exportSec.classList.remove('spring-reveal');
+        void exportSec.offsetWidth;
+        exportSec.classList.add('spring-reveal');
+
+        document.getElementById('engineStatusDot').className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+        document.getElementById('engineStatusText').innerText = 'Custom Grade Active';
+        document.getElementById('bitDepthBadge').innerText = lastBitDepthLabel;
+        document.getElementById('fileInfoTag').innerText = `512×512 • ${lastBitDepthLabel}`;
+
+        showToast('Grade extracted with 1:1 precision!');
+      } catch (err) {
+        console.error(err);
+        showToast('Error: Please upload a 512×512 HALD export.');
+      } finally {
+        overlay.classList.add('hidden');
+        document.getElementById('fileInput').value = '';
+      }
+    }
+
+    function decodeTiffBuffer(arrayBuffer) {
+      const ifds = UTIF.decode(arrayBuffer);
+      if (!ifds || ifds.length === 0) throw new Error('Invalid TIFF structure');
+      const page = ifds[0];
+      UTIF.decodeImage(arrayBuffer, page);
+
+      const width = page.width;
+      const height = page.height;
+      if (width !== HALD_DIM || height !== HALD_DIM) {
+        throw new Error(`Expected ${HALD_DIM}x${HALD_DIM} HALD image, got ${width}x${height}`);
+      }
+
+      const bitsPerSample = Array.isArray(page.t258) ? page.t258[0] : (page.t258 || 8);
+      const samplesPerPixel = page.t277 || 3;
+      const rawData = page.data;
+
+      const totalPixels = HALD_DIM * HALD_DIM;
+      const floatBuf = new Float32Array(totalPixels * 3);
+
+      if (bitsPerSample === 16) {
+        lastBitDepthLabel = '16-Bit TIFF (True Fidelity)';
+        const view = new DataView(rawData.buffer, rawData.byteOffset, rawData.byteLength);
+        const strideBytes = samplesPerPixel * 2;
+        for (let i = 0; i < totalPixels; i++) {
+          const offset = i * strideBytes;
+          floatBuf[i * 3]     = view.getUint16(offset, true) / 65535.0;
+          floatBuf[i * 3 + 1] = view.getUint16(offset + 2, true) / 65535.0;
+          floatBuf[i * 3 + 2] = view.getUint16(offset + 4, true) / 65535.0;
+        }
+      } else {
+        lastBitDepthLabel = '8-Bit TIFF (Lossless)';
+        const rgba = UTIF.toRGBA8(page);
+        for (let i = 0; i < totalPixels; i++) {
+          floatBuf[i * 3]     = rgba[i * 4] / 255.0;
+          floatBuf[i * 3 + 1] = rgba[i * 4 + 1] / 255.0;
+          floatBuf[i * 3 + 2] = rgba[i * 4 + 2] / 255.0;
+        }
+      }
+
+      activeHaldFloatBuffer = floatBuf;
+    }
+
+    function decodeStandardImageBuffer(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          if (img.width !== HALD_DIM || img.height !== HALD_DIM) {
+            reject(new Error(`Expected ${HALD_DIM}x${HALD_DIM}, got ${img.width}x${img.height}`));
+            return;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = HALD_DIM;
+          canvas.height = HALD_DIM;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          const pixels = ctx.getImageData(0, 0, HALD_DIM, HALD_DIM).data;
+
+          const totalPixels = HALD_DIM * HALD_DIM;
+          const floatBuf = new Float32Array(totalPixels * 3);
+          for (let i = 0; i < totalPixels; i++) {
+            floatBuf[i * 3]     = pixels[i * 4] / 255.0;
+            floatBuf[i * 3 + 1] = pixels[i * 4 + 1] / 255.0;
+            floatBuf[i * 3 + 2] = pixels[i * 4 + 2] / 255.0;
+          }
+          activeHaldFloatBuffer = floatBuf;
+          lastBitDepthLabel = file.type === 'image/png' ? '8-Bit PNG (Lossless)' : '8-Bit Image';
+          resolve();
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error('Image load failed'));
+        };
+        img.src = url;
+      });
+    }
+
+    /* ==========================================================================
+       3. TRILINEAR 3D LUT INTERPOLATION & .CUBE FILE COMPILER
+       ========================================================================== */
+    function sampleHaldTrilinear(rNorm, gNorm, bNorm) {
+      const buf = activeHaldFloatBuffer;
+      const maxIdx = HALD_LEVEL - 1;
+
+      const rPos = Math.max(0, Math.min(maxIdx, rNorm * maxIdx));
+      const gPos = Math.max(0, Math.min(maxIdx, gNorm * maxIdx));
+      const bPos = Math.max(0, Math.min(maxIdx, bNorm * maxIdx));
+
+      const r0 = Math.floor(rPos), r1 = Math.min(maxIdx, r0 + 1), fr = rPos - r0;
+      const g0 = Math.floor(gPos), g1 = Math.min(maxIdx, g0 + 1), fg = gPos - g0;
+      const b0 = Math.floor(bPos), b1 = Math.min(maxIdx, b0 + 1), fb = bPos - b0;
+
+      const getRGB = (ri, gi, bi) => {
+        const idx = ((bi * HALD_LEVEL + gi) * HALD_LEVEL + ri) * 3;
+        return [buf[idx], buf[idx + 1], buf[idx + 2]];
+      };
+
+      const c000 = getRGB(r0, g0, b0);
+      const c100 = getRGB(r1, g0, b0);
+      const c010 = getRGB(r0, g1, b0);
+      const c110 = getRGB(r1, g1, b0);
+      const c001 = getRGB(r0, g0, b1);
+      const c101 = getRGB(r1, g0, b1);
+      const c011 = getRGB(r0, g1, b1);
+      const c111 = getRGB(r1, g1, b1);
+
+      const out = [0, 0, 0];
+      for (let ch = 0; ch < 3; ch++) {
+        const c00 = c000[ch] * (1 - fr) + c100[ch] * fr;
+        const c10 = c010[ch] * (1 - fr) + c110[ch] * fr;
+        const c01 = c001[ch] * (1 - fr) + c101[ch] * fr;
+        const c11 = c011[ch] * (1 - fr) + c111[ch] * fr;
+
+        const c0 = c00 * (1 - fg) + c10 * fg;
+        const c1 = c01 * (1 - fg) + c11 * fg;
+
+        out[ch] = c0 * (1 - fb) + c1 * fb;
+      }
+      return out;
+    }
+
+    function downloadCubeFile() {
+      if (!activeHaldFloatBuffer) return;
+      triggerHaptic();
+
+      const lutSize = HALD_LEVEL; // Locked strictly to 64x64x64 (262,144 exact RGB nodes)
+      const rawTitle = document.getElementById('lutNameInput').value.trim() || 'ToneForge_LUT';
+      const safeTitle = rawTitle.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+      const lines = [
+        `# Created by ToneForge LUT Engine (16-Bit 64x64x64 Precision)`,
+        `TITLE "${safeTitle}"`,
+        `LUT_3D_SIZE ${lutSize}`,
+        `DOMAIN_MIN 0.0 0.0 0.0`,
+        `DOMAIN_MAX 1.0 1.0 1.0`,
+        ``
+      ];
+
+      for (let b = 0; b < lutSize; b++) {
+        for (let g = 0; g < lutSize; g++) {
+          for (let r = 0; r < lutSize; r++) {
+            const idx = ((b * HALD_LEVEL + g) * HALD_LEVEL + r) * 3;
+            const rVal = activeHaldFloatBuffer[idx];
+            const gVal = activeHaldFloatBuffer[idx + 1];
+            const bVal = activeHaldFloatBuffer[idx + 2];
+
+            lines.push(`${rVal.toFixed(6)} ${gVal.toFixed(6)} ${bVal.toFixed(6)}`);
+          }
+        }
+      }
+
+      const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${safeTitle}.cube`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast(`Exported ${safeTitle}.cube (64³)!`);
+    }
+
+    /* ==========================================================================
+       4. INTERACTIVE REC.709 SPLIT-SCREEN PREVIEW & TELEMETRY METRICS
+       ========================================================================== */
+    function updateTelemetryMetrics() {
+      if (!activeHaldFloatBuffer) return;
+      const blackPt = sampleHaldTrilinear(0, 0, 0);
+      const midPt   = sampleHaldTrilinear(0.5, 0.5, 0.5);
+      const whitePt = sampleHaldTrilinear(1, 1, 1);
+
+      const lum = (rgb) => rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
+      const shadowPct = (lum(blackPt) * 100).toFixed(1);
+      const contrastRatio = (lum(midPt) / 0.5).toFixed(2);
+      const highPct = Math.round(lum(whitePt) * 100);
+
+      document.getElementById('metricShadow').innerText = `+${shadowPct}%`;
+      document.getElementById('metricContrast').innerText = `${contrastRatio}x`;
+      document.getElementById('metricHighlight').innerText = `${highPct}%`;
+    }
+
+    function drawSyntheticRec709Scene(ctx, w, h, sceneIdx) {
+      ctx.clearRect(0, 0, w, h);
+
+      if (sceneIdx === 0) {
+        const sky = ctx.createLinearGradient(0, 0, 0, h);
+        sky.addColorStop(0, '#1e3a8a');
+        sky.addColorStop(0.55, '#3b82f6');
+        sky.addColorStop(0.85, '#f59e0b');
+        sky.addColorStop(1, '#78350f');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, w, h);
+
+        const sun = ctx.createRadialGradient(w * 0.72, h * 0.35, 10, w * 0.72, h * 0.35, 150);
+        sun.addColorStop(0, 'rgba(255, 247, 237, 0.95)');
+        sun.addColorStop(0.4, 'rgba(251, 191, 36, 0.45)');
+        sun.addColorStop(1, 'rgba(251, 191, 36, 0)');
+        ctx.fillStyle = sun;
+        ctx.fillRect(0, 0, w, h);
+
+        const skinGrad = ctx.createRadialGradient(w * 0.36, h * 0.48, 12, w * 0.4, h * 0.54, 88);
+        skinGrad.addColorStop(0, '#f3c6a5');
+        skinGrad.addColorStop(0.55, '#c68663');
+        skinGrad.addColorStop(1, '#4a2c1d');
+        ctx.beginPath();
+        ctx.arc(w * 0.4, h * 0.54, 84, 0, Math.PI * 2);
+        ctx.fillStyle = skinGrad;
+        ctx.fill();
+      } else {
+        const swatches = [
+          '#735244', '#c29682', '#627a9d', '#576c43', '#8580b1', '#67bdaa',
+          '#d67e2c', '#505ba6', '#c15a63', '#5e3c6c', '#9dbc40', '#e0a32e'
+        ];
+        const cols = 6, rows = 2;
+        const pad = 28;
+        const cellW = (w - pad * 2) / cols;
+        const cellH = (h * 0.58 - pad) / rows;
+
+        ctx.fillStyle = '#18181b';
+        ctx.fillRect(0, 0, w, h);
+
+        swatches.forEach((hex, idx) => {
+          const r = Math.floor(idx / cols);
+          const c = idx % cols;
+          ctx.fillStyle = hex;
+          ctx.fillRect(pad + c * cellW + 3, pad + r * cellH + 3, cellW - 6, cellH - 6);
+        });
+
+        const grayGrad = ctx.createLinearGradient(pad, 0, w - pad, 0);
+        grayGrad.addColorStop(0, '#050505');
+        grayGrad.addColorStop(0.5, '#808080');
+        grayGrad.addColorStop(1, '#fafafa');
+        ctx.fillStyle = grayGrad;
+        ctx.fillRect(pad, h * 0.68, w - pad * 2, h * 0.16);
+      }
+    }
+
+    function renderPreviewScenes() {
+      const origCanvas = document.getElementById('previewOriginalCanvas');
+      const gradCanvas = document.getElementById('previewGradedCanvas');
+      const w = origCanvas.width;
+      const h = origCanvas.height;
+
+      const origCtx = origCanvas.getContext('2d');
+      const gradCtx = gradCanvas.getContext('2d');
+
+      drawSyntheticRec709Scene(origCtx, w, h, currentSceneIndex);
+
+      const srcImg = origCtx.getImageData(0, 0, w, h);
+      const dstImg = gradCtx.createImageData(w, h);
+      const s = srcImg.data;
+      const d = dstImg.data;
+
+      for (let i = 0; i < s.length; i += 4) {
+        const mapped = sampleHaldTrilinear(s[i] / 255, s[i + 1] / 255, s[i + 2] / 255);
+        d[i]     = Math.round(mapped[0] * 255);
+        d[i + 1] = Math.round(mapped[1] * 255);
+        d[i + 2] = Math.round(mapped[2] * 255);
+        d[i + 3] = 255;
+      }
+      gradCtx.putImageData(dstImg, 0, 0);
+    }
+
+    function updateSplitPreview(val) {
+      document.getElementById('previewOriginalClip').style.width = `${val}%`;
+      document.getElementById('splitDividerLine').style.left = `${val}%`;
+    }
+
+    function cycleTestScene() {
+      triggerHaptic();
+      currentSceneIndex = (currentSceneIndex + 1) % 2;
+      renderPreviewScenes();
+    }
+
+    function resetWorkspace() {
+      triggerHaptic();
+      activeHaldFloatBuffer = generateIdentityHaldBuffer();
+      document.getElementById('exportSection').classList.add('hidden');
+      document.getElementById('engineStatusDot').className = 'w-2 h-2 rounded-full bg-blue-500';
+      document.getElementById('engineStatusText').innerText = 'Identity Color Matrix (Neutral)';
+      document.getElementById('bitDepthBadge').innerText = 'Awaiting Graded TIFF';
+      document.getElementById('metricShadow').innerText = '0.0%';
+      document.getElementById('metricContrast').innerText = '1.00x';
+      document.getElementById('metricHighlight').innerText = '100%';
+      renderPreviewScenes();
+      showToast('Workspace reset to neutral Rec.709');
+    }
+
+    /* ==========================================================================
+       THEME MANAGEMENT, PWA MODAL & UTILITIES
+       ========================================================================== */
+    function setTheme(mode) {
+      const html = document.documentElement;
+      html.setAttribute('data-theme', mode);
+
+      let useDark = false;
+      if (mode === 'dark') useDark = true;
+      else if (mode === 'light') useDark = false;
+      else useDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+      if (useDark) {
+        html.classList.add('dark');
+        html.classList.remove('light');
+      } else {
+        html.classList.remove('dark');
+        html.classList.add('light');
+      }
+    }
+
+    function togglePwaModal() {
+      document.getElementById('pwaModal').classList.toggle('hidden');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      document.getElementById('toastMessage').innerText = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+      }, 2400);
+    }
+
+    function triggerHaptic() {
+      if (navigator.vibrate) navigator.vibrate(10);
+    }
+
+    function initApp() {
+      activeHaldFloatBuffer = generateIdentityHaldBuffer();
+      initDropzone();
+      renderPreviewScenes();
+
+      const themeSelector = document.getElementById('themeSelector');
+      if (themeSelector) setTheme(themeSelector.value);
+
+      if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+          if (document.getElementById('themeSelector')?.value === 'system') {
+            setTheme('system');
+          }
+        });
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+  </script>
+</body>
+</html>
