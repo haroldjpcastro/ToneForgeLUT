@@ -832,7 +832,8 @@
 
       const lutSize = HALD_LEVEL; // Locked strictly to 64x64x64 (262,144 exact RGB nodes)
       const rawTitle = document.getElementById('lutNameInput').value.trim() || 'ToneForge_LUT';
-      const safeTitle = rawTitle.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const cleanTitle = rawTitle.replace(/\.cube$/i, '').trim();
+      const safeTitle = cleanTitle.replace(/[^a-zA-Z0-9_-]/g, '_') || 'ToneForge_LUT';
 
       const lines = [
         `# Created by ToneForge LUT Engine (16-Bit 64x64x64 Precision)`,
@@ -856,7 +857,8 @@
         }
       }
 
-      const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+      // Use application/octet-stream so browsers never append an extraneous .txt extension to .cube files
+      const blob = new Blob([lines.join('\n')], { type: 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -864,7 +866,7 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
 
       showToast(`Exported ${safeTitle}.cube (64³)!`);
     }
